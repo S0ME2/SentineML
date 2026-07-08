@@ -1,0 +1,72 @@
+# ==========================================
+# Version Control
+# ==========================================
+.git
+.gitignore
+.github
+.gitlab
+
+# ==========================================
+# Secrets, Configurations & Local Env
+# ==========================================
+.env*
+!.env.example
+*.secret
+*.pem
+*.tls
+*.key
+
+# ==========================================
+# Python Virtual Envs & Dependencies
+# ==========================================
+# Dependencies should always be re-installed inside the container environment
+venv/
+.venv/
+env/
+ENV/
+
+# ==========================================
+# Python Bytecode & Tool Caches
+# ==========================================
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.cache/
+
+# ==========================================
+# Build Artifacts & Packages
+# ==========================================
+build/
+dist/
+*.egg-info/
+
+# ==========================================
+# Local Tooling, Documentation & IDEs
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+README.md
+docs/
+
+# ==========================================
+# Project Infrastructure Files
+# ==========================================
+# These files are used to orchestrate infrastructure, not run the app itself
+Makefile
+docker-compose*.yaml
+docker-compose*.yml
+Dockerfile
+sql/
+.sql/

@@ -1,0 +1,80 @@
+# ==========================================
+# Python Virtual Environments
+# ==========================================
+.venv/
+venv/
+ENV/
+env/
+python/
+ENV/
+
+# ==========================================
+# uv & Project Lock Files
+# ==========================================
+# Always commit uv.lock and pyproject.toml for deterministic builds
+.uv/
+# If you want to force share your pinned project python version, uncomment below:
+# !.python-version
+
+# ==========================================
+# Environment Variables & Secrets
+# ==========================================
+.env
+.env.local
+.env.*local*
+*.env
+*.secret
+*.pem
+*.tls
+*.key
+
+# ==========================================
+# Python Bytecode, Caching & Testing
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.cache/
+
+# ==========================================
+# Packaging & Builds (Hatch, Setuptools, etc)
+# ==========================================
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ==========================================
+# IDEs, Editors & System Files
+# ==========================================
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*~
+.DS_Store
+Thumbs.db

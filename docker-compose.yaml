@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    image: sentinelml
+    env_file:
+      - .env.local.docker
+    ports:
+      - "8888:8888"
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    env_file:
+      - .env.local.docker
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/database.sql:/docker-entrypoint-initdb.d/database.sql
+
+volumes:
+  postgres_data:
