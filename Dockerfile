@@ -1,35 +1,48 @@
 # syntax=docker/dockerfile:1.7
+FROM uv:0.11.28 AS uv-bin
+
+
+
 FROM python:3.12-slim AS builder
+
+COPY --from=uv-bin /uv /uvx /bin/
 
 WORKDIR /build
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential \
-    && rm -rf /var/lib/apt/lists/*
+ENV UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1 \
+    UV_PYTHON_DOWNLOADS=0
 
-RUN --mount=type=bind,source=requirements.txt,target=/tmp/requirements.txt \
-    pip wheel --no-cache-dir --wheel-dir /build/wheels -r /tmp/requirements.txt
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    uv sync --locked --no-dev --no-install-project --no-editable
+
+COPY app app
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    uv sync --locked --no-dev --no-editable
 
 
 
 FROM python:3.12-slim AS runner
 
-ENV PYTHONPATH=/SentinelML \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
 WORKDIR /SentinelML
 
-RUN addgroup --system app \
-    && adduser --system --ingroup app app
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/SentinelML/.venv/bin:$PATH"
 
-RUN --mount=type=bind,from=builder,source=/build/wheels,target=/wheels \
-    --mount=type=bind,source=requirements.txt,target=/tmp/requirements.txt \
-    pip install --no-cache-dir --no-index --find-links=/wheels -r /tmp/requirements.txt
+RUN addgroup --system group \
+    && adduser --system --ingroup group user
 
-COPY ./app ./app
+COPY --from=builder --chown=user:group /build/.venv /SentinelML/.venv
 
-USER app
+COPY --from=builder --chown=user:group /build/app /SentinelML/app
+
+USER user
 
 EXPOSE 8888
 

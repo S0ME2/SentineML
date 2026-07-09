@@ -6,7 +6,7 @@ SentinelML is a learning and portfolio backend project focused on the metadata s
 
 It is intentionally small enough to understand, but structured around real backend concerns: API design, PostgreSQL integrity, run lifecycle rules, reproducibility thinking, and practical MLOps awareness.
 
-**Tech stack:** Python 3.12, FastAPI, PostgreSQL, psycopg 3, Pydantic, plain SQL, Docker Compose, Swagger UI.
+**Tech stack:** Python 3.12, FastAPI, PostgreSQL, psycopg 3, Pydantic, plain SQL, service/repository architecture, Docker Compose, Swagger UI.
 
 **Quick links**
 
@@ -53,16 +53,20 @@ flowchart LR
     client["Swagger UI / API Client"]
     app["FastAPI App<br/>app/main.py"]
     routers["Routers<br/>projects, datasets, models, runs,<br/>parameters, metrics, metric directions"]
+    handlers["Error Translation<br/>App errors to HTTP errors"]
     schemas["Pydantic Schemas<br/>request and response models"]
-    crud["CRUD / Query Layer<br/>plain SQL with psycopg"]
+    services["Service Layer<br/>business rules and transactions"]
+    repos["Repository Layer<br/>plain SQL with psycopg"]
     dbconn["Database Dependency<br/>DATABASE_URL connection"]
     postgres[("PostgreSQL<br/>sql/database.sql")]
 
     client --> app
     app --> routers
+    routers --> handlers
     routers --> schemas
-    routers --> crud
-    crud --> dbconn
+    routers --> services
+    services --> repos
+    repos --> dbconn
     dbconn --> postgres
 ```
 
@@ -229,6 +233,8 @@ Implemented endpoint groups:
 | Metrics | `GET /runs/{run_id}/metrics/`, `GET /runs/{run_id}/metrics/{metric_id}`, `POST /runs/{run_id}/metrics/`, `PATCH /runs/{run_id}/metrics/{metric_id}`, `DELETE /runs/{run_id}/metrics/{metric_id}` |
 | Metric directions | `GET /metric-directions/`, `GET /metric-directions/{metric_name}`, `POST /metric-directions/`, `PATCH /metric-directions/{metric_name}`, `DELETE /metric-directions/{metric_name}` |
 
+Error responses are translated from application-level exceptions into standard HTTP responses. In practice, validation and domain errors are typically returned as `400 Bad Request`, missing resources as `404 Not Found`, and uniqueness or in-use conflicts as `409 Conflict`.
+
 ## Business Rules and Integrity
 
 Rules enforced by the database and application code:
@@ -260,7 +266,7 @@ Rules enforced by the database and application code:
 
 ### Option 1: Run with Docker Compose
 
-Docker Compose is the simplest setup because it starts PostgreSQL and initializes the schema automatically from [`sql/database.sql`](sql/database.sql).
+Docker Compose is the simplest setup because it starts PostgreSQL, loads variables from `.env.local.docker`, and initializes the schema automatically from [`sql/database.sql`](sql/database.sql).
 
 ```bash
 docker compose up -d --build
@@ -338,6 +344,22 @@ Equivalent direct command:
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8888
 ```
 
+## Development Notes
+
+The project includes a minimal developer setup in [`pyproject.toml`](pyproject.toml) with Ruff configured for linting and import sorting.
+
+Install development dependencies:
+
+```bash
+uv sync
+```
+
+Run lint checks:
+
+```bash
+uv run ruff check .
+```
+
 ## Environment Variables
 
 The app reads environment variables with `python-dotenv` in [`app/database.py`](app/database.py).
@@ -352,7 +374,7 @@ The app reads environment variables with `python-dotenv` in [`app/database.py`](
 | `POSTGRES_MACHINE` | Database host name. In Docker, this is `db`; locally, this is usually `localhost`. |
 | `POSTGRES_PORT` | PostgreSQL port, usually `5432`. |
 
-The repository includes `.env.example`, `.env.local`, and `.env.docker`. For personal or shared projects, prefer replacing committed local credentials with a sanitized example file.
+The repository includes `.env.example`, `.env.local`, and `.env.local.docker`. For personal or shared projects, prefer replacing committed local credentials with a sanitized example file.
 
 ## Swagger Usage
 
@@ -363,6 +385,44 @@ http://127.0.0.1:8888/docs
 ```
 
 Swagger provides request forms for each route and displays the Pydantic response models. This is the recommended way to manually explore the API during development.
+
+## Example API Requests
+
+Create a project:
+
+```bash
+curl -X POST "http://127.0.0.1:8888/projects/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "image-classification",
+    "description": "Baseline image classification experiments"
+  }'
+```
+
+Create a waiting run:
+
+```bash
+curl -X POST "http://127.0.0.1:8888/runs/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "project_id": 1,
+    "dataset_id": 1,
+    "model_id": 1,
+    "notes": "Initial baseline run"
+  }'
+```
+
+Log a metric for a running run:
+
+```bash
+curl -X POST "http://127.0.0.1:8888/runs/1/metrics/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "accuracy",
+    "value": 0.94,
+    "notes": "Validation accuracy at final epoch"
+  }'
+```
 
 ## Example Manual Test Scenario
 
@@ -386,7 +446,16 @@ If a run produces invalid results, mark it as ignored instead of deleting it. Th
 ```text
 .
 ├── app
-│   ├── crud
+│   ├── exceptions
+│   │   ├── base.py
+│   │   ├── datasets.py
+│   │   ├── metric_directions.py
+│   │   ├── metrics.py
+│   │   ├── models.py
+│   │   ├── parameters.py
+│   │   ├── projects.py
+│   │   └── runs.py
+│   ├── repositories
 │   │   ├── datasets.py
 │   │   ├── metric_directions.py
 │   │   ├── metrics.py
@@ -396,6 +465,7 @@ If a run produces invalid results, mark it as ignored instead of deleting it. Th
 │   │   └── runs.py
 │   ├── routers
 │   │   ├── datasets.py
+│   │   ├── error_handlers.py
 │   │   ├── health.py
 │   │   ├── metric_directions.py
 │   │   ├── metrics.py
@@ -404,6 +474,15 @@ If a run produces invalid results, mark it as ignored instead of deleting it. Th
 │   │   ├── projects.py
 │   │   └── runs.py
 │   ├── schemas
+│   │   ├── datasets.py
+│   │   ├── metric_directions.py
+│   │   ├── metrics.py
+│   │   ├── models.py
+│   │   ├── parameters.py
+│   │   ├── projects.py
+│   │   └── runs.py
+│   ├── services
+│   │   ├── common.py
 │   │   ├── datasets.py
 │   │   ├── metric_directions.py
 │   │   ├── metrics.py
@@ -426,6 +505,8 @@ If a run produces invalid results, mark it as ignored instead of deleting it. Th
 ## Design Notes
 
 **Plain SQL over an ORM:** SentinelML uses explicit SQL through psycopg. This makes database behavior visible and keeps the project focused on schema design, constraints, transactions, and query logic.
+
+**Repositories and services:** SQL access lives in repository modules, while business rules and transaction handling live in services. Routers stay thin and translate application errors into HTTP responses.
 
 **PostgreSQL as a source of integrity:** Unique constraints, foreign keys, enum statuses, and cascading behavior are part of the database design instead of being handled only in Python.
 
