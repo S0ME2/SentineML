@@ -1,5 +1,6 @@
 from psycopg.errors import ForeignKeyViolation, UniqueViolation
 
+from app.database import create_connection
 from app.exceptions import metric_directions as exc
 from app.repositories import metric_directions as metric_directions_crud
 from app.repositories import metrics as metrics_crud
@@ -16,20 +17,42 @@ def _get_metric_direction_for_update(metric_name, db):
     return metric_direction
 
 
-def get_metric_directions(db):
-    return metric_directions_crud.get_metric_directions(db)
+def get_metric_directions():
+    db = create_connection()
+
+    try:
+        return metric_directions_crud.get_metric_directions(db)
+
+    except Exception:
+        raise
+
+    finally:
+        db.close()
 
 
-def get_metric_direction(metric_name, db):
-    metric_direction = metric_directions_crud.get_metric_direction(metric_name, db)
+def get_metric_direction(metric_name):
+    db = create_connection()
 
-    if metric_direction is None:
-        raise exc.MetricDirectionNotFound(f"Metric direction '{metric_name}' not found")
+    try:
+        metric_direction = metric_directions_crud.get_metric_direction(metric_name, db)
 
-    return metric_direction
+        if metric_direction is None:
+            raise exc.MetricDirectionNotFound(
+                f"Metric direction '{metric_name}' not found"
+            )
+
+        return metric_direction
+
+    except Exception:
+        raise
+
+    finally:
+        db.close()
 
 
-def create_metric_direction(metric_direction, db):
+def create_metric_direction(metric_direction):
+    db = create_connection()
+
     try:
         created_metric_direction = metric_directions_crud.create_metric_direction(
             metric_direction, db
@@ -48,8 +71,16 @@ def create_metric_direction(metric_direction, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
 
-def update_metric_direction(metric_name, metric_direction_update, db):
+
+def update_metric_direction(metric_name, metric_direction_update):
+    db = create_connection()
+
+    if not metric_name and not metric_direction_update.dict(exclude_unset=True):
+        raise exc.EmptyMetricDirectionUpdate("No fields to update")
+
     try:
         _get_metric_direction_for_update(metric_name, db)
 
@@ -70,8 +101,13 @@ def update_metric_direction(metric_name, metric_direction_update, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
 
-def delete_metric_direction(metric_name, db):
+
+def delete_metric_direction(metric_name):
+    db = create_connection()
+
     try:
         _get_metric_direction_for_update(metric_name, db)
 
@@ -89,3 +125,6 @@ def delete_metric_direction(metric_name, db):
     except Exception:
         db.rollback()
         raise
+
+    finally:
+        db.close()

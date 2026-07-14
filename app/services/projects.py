@@ -1,5 +1,6 @@
 from psycopg.errors import ForeignKeyViolation, UniqueViolation
 
+from app.database import create_connection
 from app.exceptions import projects as exc
 from app.repositories import projects as projects_crud
 from app.services.common import build_update_fields
@@ -14,20 +15,40 @@ def _get_project_for_update(project_id, db):
     return project
 
 
-def get_projects(db):
-    return projects_crud.get_projects(db)
+def get_projects():
+    db = create_connection()
+
+    try:
+        return projects_crud.get_projects(db)
+
+    except Exception:
+        raise
+
+    finally:
+        db.close()
 
 
-def get_project(project_id, db):
-    project = projects_crud.get_project(project_id, db)
+def get_project(project_id):
+    db = create_connection()
 
-    if project is None:
-        raise exc.ProjectNotFound(f"Project with id {project_id} not found")
+    try:
+        project = projects_crud.get_project(project_id, db)
 
-    return project
+        if project is None:
+            raise exc.ProjectNotFound(f"Project with id {project_id} not found")
+
+        return project
+
+    except Exception:
+        raise
+
+    finally:
+        db.close()
 
 
-def create_project(project, db):
+def create_project(project):
+    db = create_connection()
+
     try:
         created_project = projects_crud.create_project(project, db)
 
@@ -44,20 +65,25 @@ def create_project(project, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
 
-def update_project(project_id, project_update, db):
+
+def update_project(project_id, project_update):
+    update_fields = build_update_fields(
+        {
+            "name": project_update.name,
+            "description": project_update.description,
+        }
+    )
+
+    if not update_fields:
+        raise exc.EmptyProjectUpdate("No fields to update")
+
+    db = create_connection()
+
     try:
         _get_project_for_update(project_id, db)
-
-        update_fields = build_update_fields(
-            {
-                "name": project_update.name,
-                "description": project_update.description,
-            }
-        )
-
-        if not update_fields:
-            raise exc.EmptyProjectUpdate("No fields to update")
 
         updated_project = projects_crud.update_project(project_id, update_fields, db)
 
@@ -74,8 +100,13 @@ def update_project(project_id, project_update, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
 
-def delete_project(project_id, db):
+
+def delete_project(project_id):
+    db = create_connection()
+
     try:
         _get_project_for_update(project_id, db)
 
@@ -92,3 +123,6 @@ def delete_project(project_id, db):
     except Exception:
         db.rollback()
         raise
+
+    finally:
+        db.close()

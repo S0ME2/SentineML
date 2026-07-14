@@ -1,5 +1,6 @@
 from psycopg.errors import ForeignKeyViolation, UniqueViolation
 
+from app.database import create_connection
 from app.exceptions import models as exc
 from app.repositories import models as models_crud
 from app.services.common import build_update_fields
@@ -14,20 +15,40 @@ def _get_model_for_update(model_id, db):
     return model
 
 
-def get_models(db):
-    return models_crud.get_models(db)
+def get_models():
+    db = create_connection()
+
+    try:
+        return models_crud.get_models(db)
+
+    except Exception:
+        raise
+
+    finally:
+        db.close()
 
 
-def get_model(model_id, db):
-    model = models_crud.get_model(model_id, db)
+def get_model(model_id):
+    db = create_connection()
 
-    if model is None:
-        raise exc.ModelNotFound(f"Model with id {model_id} not found")
+    try:
+        model = models_crud.get_model(model_id, db)
 
-    return model
+        if model is None:
+            raise exc.ModelNotFound(f"Model with id {model_id} not found")
+
+        return model
+
+    except Exception:
+        raise
+
+    finally:
+        db.close()
 
 
-def create_model(model, db):
+def create_model(model):
+    db = create_connection()
+
     try:
         created_model = models_crud.create_model(model, db)
 
@@ -45,23 +66,28 @@ def create_model(model, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
 
-def update_model(model_id, model_update, db):
+
+def update_model(model_id, model_update):
+    update_fields = build_update_fields(
+        {
+            "name": model_update.name,
+            "version": model_update.version,
+            "description": model_update.description,
+            "model_type": model_update.model_type,
+            "metadata": model_update.metadata,
+        }
+    )
+
+    if not update_fields:
+        raise exc.EmptyModelUpdate("No fields to update")
+
+    db = create_connection()
+
     try:
         _get_model_for_update(model_id, db)
-
-        update_fields = build_update_fields(
-            {
-                "name": model_update.name,
-                "version": model_update.version,
-                "description": model_update.description,
-                "model_type": model_update.model_type,
-                "metadata": model_update.metadata,
-            }
-        )
-
-        if not update_fields:
-            raise exc.EmptyModelUpdate("No fields to update")
 
         updated_model = models_crud.update_model(model_id, update_fields, db)
 
@@ -80,8 +106,13 @@ def update_model(model_id, model_update, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
 
-def delete_model(model_id, db):
+
+def delete_model(model_id):
+    db = create_connection()
+
     try:
         _get_model_for_update(model_id, db)
 
@@ -97,3 +128,6 @@ def delete_model(model_id, db):
     except Exception:
         db.rollback()
         raise
+
+    finally:
+        db.close()

@@ -1,5 +1,6 @@
 from psycopg.errors import UniqueViolation
 
+from app.database import create_connection
 from app.exceptions import parameters as exc
 from app.exceptions import runs as runs_exc
 from app.repositories import parameters as parameters_crud
@@ -12,21 +13,41 @@ def _get_parameters_for_update(run_id, db):
 
 
 def get_parameters(run_id, db):
-    runs_services.get_run(run_id, db)
-    return parameters_crud.get_parameters(run_id, db)
+    db = create_connection()
+
+    try:
+        runs_services.get_run(run_id, db)
+        return parameters_crud.get_parameters(run_id, db)
+
+    except Exception:
+        raise
+
+    finally:
+        db.close()
 
 
-def get_parameter(run_id, parameter_id, db):
-    runs_services.get_run(run_id, db)
-    return require_found(
-        parameters_crud.get_parameter(run_id, parameter_id, db),
-        exc.ParameterNotFound(
-            f"Parameter with id {parameter_id} not found for run with id {run_id}"
-        ),
-    )
+def get_parameter(run_id, parameter_id):
+    db = create_connection()
+
+    try:
+        runs_services.get_run(run_id, db)
+        return require_found(
+            parameters_crud.get_parameter(run_id, parameter_id, db),
+            exc.ParameterNotFound(
+                f"Parameter with id {parameter_id} not found for run with id {run_id}"
+            ),
+        )
+
+    except Exception:
+        raise
+
+    finally:
+        db.close()
 
 
-def create_parameter(run_id, parameter, db):
+def create_parameter(run_id, parameter):
+    db = create_connection()
+
     try:
         run = runs_services._get_run_for_update(run_id, db)
 
@@ -52,8 +73,27 @@ def create_parameter(run_id, parameter, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
+
 
 def update_parameter(run_id, parameter_id, parameter_update, db):
+    update_fields = build_update_fields(
+        {
+            "name": parameter_update.name,
+            "value": parameter_update.value,
+            "value_type": parameter_update.value_type,
+            "notes": parameter_update.notes,
+        }
+    )
+
+    if not update_fields:
+        raise exc.EmptyParameterUpdate(
+            "No fields to update for parameter with id "
+            f"{parameter_id} and run with id {run_id}"
+        )
+    db = create_connection()
+
     try:
         run = runs_services._get_run_for_update(run_id, db)
 
@@ -62,21 +102,6 @@ def update_parameter(run_id, parameter_id, parameter_update, db):
             {"waiting"},
             runs_exc.RunStatusError(f"Run with id {run_id} is not in 'waiting' status"),
         )
-
-        update_fields = build_update_fields(
-            {
-                "name": parameter_update.name,
-                "value": parameter_update.value,
-                "value_type": parameter_update.value_type,
-                "notes": parameter_update.notes,
-            }
-        )
-
-        if not update_fields:
-            raise exc.EmptyParameterUpdate(
-                "No fields to update for parameter with id "
-                f"{parameter_id} and run with id {run_id}"
-            )
 
         updated_parameter = parameters_crud.update_parameter(
             run_id, parameter_id, update_fields, db
@@ -103,8 +128,13 @@ def update_parameter(run_id, parameter_id, parameter_update, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
 
-def delete_parameter(run_id, parameter_id, db):
+
+def delete_parameter(run_id, parameter_id):
+    db = create_connection()
+
     try:
         run = runs_services._get_run_for_update(run_id, db)
 
@@ -129,3 +159,6 @@ def delete_parameter(run_id, parameter_id, db):
     except Exception:
         db.rollback()
         raise
+
+    finally:
+        db.close()

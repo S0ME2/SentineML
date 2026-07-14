@@ -1,5 +1,6 @@
 from psycopg.errors import ForeignKeyViolation
 
+from app.database import create_connection
 from app.exceptions import (
     base,
 )
@@ -50,20 +51,40 @@ def _get_run_for_update(run_id, db):
     return run
 
 
-def get_runs(db):
-    return runs_crud.get_runs(db)
+def get_runs():
+    db = create_connection()
+
+    try:
+        return runs_crud.get_runs(db)
+
+    except Exception:
+        raise
+
+    finally:
+        db.close()
 
 
-def get_run(run_id, db):
-    run = runs_crud.get_run(run_id, db)
+def get_run(run_id):
+    db = create_connection()
 
-    if run is None:
-        raise exc.RunNotFound(f"Run with id {run_id} not found")
+    try:
+        run = runs_crud.get_run(run_id, db)
 
-    return run
+        if run is None:
+            raise exc.RunNotFound(f"Run with id {run_id} not found")
+
+        return run
+
+    except Exception:
+        raise
+
+    finally:
+        db.close()
 
 
-def create_run(run, db):
+def create_run(run):
+    db = create_connection()
+
     try:
         _validate_run_references(run.project_id, run.dataset_id, run.model_id, db)
 
@@ -80,8 +101,13 @@ def create_run(run, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
 
-def update_run(run_id, run_update, db):
+
+def update_run(run_id, run_update):
+    db = create_connection()
+
     try:
         run = _get_run_for_update(run_id, db)
 
@@ -136,8 +162,13 @@ def update_run(run_id, run_update, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
 
-def delete_run(run_id, db):
+
+def delete_run(run_id):
+    db = create_connection()
+
     try:
         run = _get_run_for_update(run_id, db)
 
@@ -159,8 +190,13 @@ def delete_run(run_id, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
+
 
 def start_run(run_id, db):
+    db = create_connection()
+
     try:
         run = _get_run_for_update(run_id, db)
 
@@ -188,8 +224,13 @@ def start_run(run_id, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
 
-def cancel_run(run_id, reason, db):
+
+def cancel_run(run_id, reason):
+    db = create_connection()
+
     try:
         run = _get_run_for_update(run_id, db)
 
@@ -211,8 +252,13 @@ def cancel_run(run_id, reason, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
 
-def fail_run(run_id, reason, db):
+
+def fail_run(run_id, reason):
+    db = create_connection()
+
     try:
         run = _get_run_for_update(run_id, db)
 
@@ -234,8 +280,13 @@ def fail_run(run_id, reason, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
 
-def ignore_run(run_id, ignore_reason, db):
+
+def ignore_run(run_id, ignore_reason):
+    db = create_connection()
+
     try:
         _get_run_for_update(run_id, db)
 
@@ -248,8 +299,13 @@ def ignore_run(run_id, ignore_reason, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
 
-def unignore_run(run_id, db):
+
+def unignore_run(run_id):
+    db = create_connection()
+
     try:
         _get_run_for_update(run_id, db)
 
@@ -262,8 +318,13 @@ def unignore_run(run_id, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
 
-def complete_run(run_id, db):
+
+def complete_run(run_id):
+    db = create_connection()
+
     try:
         run = _get_run_for_update(run_id, db)
 
@@ -290,29 +351,43 @@ def complete_run(run_id, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
 
-def compare_project_runs(project_id, metric_name, db):
-    projects_services.get_project(project_id, db)
 
-    metric_direction = metric_directions_services.get_metric_direction(metric_name, db)
-    sort_direction = "DESC" if metric_direction["maximize"] else "ASC"
+def compare_project_runs(project_id, metric_name):
+    db = create_connection()
 
-    ranked_runs = runs_crud.compare_project_runs(
-        project_id,
-        metric_name,
-        sort_direction,
-        db,
-    )
+    try:
+        projects_services.get_project(project_id, db)
 
-    if not ranked_runs:
-        raise exc.RunHasNoMetrics(
-            f"Project with id {project_id} has no completed, non-ignored runs "
-            f"with metric '{metric_name}'"
+        metric_direction = metric_directions_services.get_metric_direction(
+            metric_name, db
+        )
+        sort_direction = "DESC" if metric_direction["maximize"] else "ASC"
+
+        ranked_runs = runs_crud.compare_project_runs(
+            project_id,
+            metric_name,
+            sort_direction,
+            db,
         )
 
-    return ranked_runs
+        if not ranked_runs:
+            raise exc.RunHasNoMetrics(
+                f"Project with id {project_id} has no completed, non-ignored runs "
+                f"with metric '{metric_name}'"
+            )
+
+        return ranked_runs
+
+    except Exception:
+        raise
+
+    finally:
+        db.close()
 
 
-def get_project_best_run(project_id, metric_name, db):
-    ranked_runs = compare_project_runs(project_id, metric_name, db)
+def get_project_best_run(project_id, metric_name):
+    ranked_runs = compare_project_runs(project_id, metric_name)
     return ranked_runs[0]

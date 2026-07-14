@@ -13,10 +13,17 @@ else:
     load_dotenv()
 
 
-def get_db():
+def create_connection():
     database_url = os.getenv("DATABASE_URL")
 
-    connection = psycopg.connect(database_url, row_factory=dict_row)
+    if database_url is None:
+        raise ValueError("DATABASE_URL environment variable is not set")
+
+    return psycopg.connect(database_url, row_factory=dict_row)
+
+
+def get_db():
+    connection = create_connection()
 
     try:
         yield connection

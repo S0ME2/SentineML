@@ -1,5 +1,6 @@
 from psycopg.errors import ForeignKeyViolation, UniqueViolation
 
+from app.database import create_connection
 from app.exceptions import (
     metric_directions as metric_directions_exc,
 )
@@ -14,26 +15,45 @@ from app.services import runs as runs_services
 from app.services.common import build_update_fields, require_found, require_status
 
 
-def get_metrics(run_id, db):
-    runs_services.get_run(run_id, db)
-    return metrics_crud.get_metrics(run_id, db)
-
-
-def get_metric(run_id, metric_id, db):
-    runs_services.get_run(run_id, db)
-    return require_found(
-        metrics_crud.get_metric(run_id, metric_id, db),
-        exc.MetricNotFound(
-            f"Metric with id {metric_id} not found for run with id {run_id}"
-        ),
-    )
-
-
 def _get_metrics_for_update(run_id, db):
     return metrics_crud._get_metrics_for_update(run_id, db)
 
 
-def create_metric(run_id, metric, db):
+def get_metrics(run_id):
+    db = create_connection()
+    try:
+        runs_services.get_run(run_id, db)
+        return metrics_crud.get_metrics(run_id, db)
+
+    except Exception:
+        raise
+
+    finally:
+        db.close()
+
+
+def get_metric(run_id, metric_id):
+    db = create_connection()
+
+    try:
+        runs_services.get_run(run_id, db)
+        return require_found(
+            metrics_crud.get_metric(run_id, metric_id, db),
+            exc.MetricNotFound(
+                f"Metric with id {metric_id} not found for run with id {run_id}"
+            ),
+        )
+
+    except Exception:
+        raise
+
+    finally:
+        db.close()
+
+
+def create_metric(run_id, metric):
+    db = create_connection()
+
     try:
         run = runs_services._get_run_for_update(run_id, db)
 
@@ -64,8 +84,13 @@ def create_metric(run_id, metric, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
 
-def update_metric(run_id, metric_id, metric_update, db):
+
+def update_metric(run_id, metric_id, metric_update):
+    db = create_connection()
+
     try:
         run = runs_services._get_run_for_update(run_id, db)
 
@@ -115,8 +140,13 @@ def update_metric(run_id, metric_id, metric_update, db):
         db.rollback()
         raise
 
+    finally:
+        db.close()
 
-def delete_metric(run_id, metric_id, db):
+
+def delete_metric(run_id, metric_id):
+    db = create_connection()
+
     try:
         run = runs_services._get_run_for_update(run_id, db)
 
@@ -140,3 +170,6 @@ def delete_metric(run_id, metric_id, db):
     except Exception:
         db.rollback()
         raise
+
+    finally:
+        db.close()

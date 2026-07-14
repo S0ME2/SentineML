@@ -12,43 +12,43 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 
 
 @router.get("/", response_model=list[projects_schemas.ProjectResponse])
-def get_projects(db=Depends(get_db)):
+def get_projects():
     try:
-        return projects_services.get_projects(db)
+        return projects_services.get_projects()
     except AppError as error:
         raise_http_error(error)
 
 
 @router.get("/{project_id}", response_model=projects_schemas.ProjectResponse)
-def get_project(project_id: int, db=Depends(get_db)):
+def get_project(project_id: int):
     try:
-        return projects_services.get_project(project_id, db)
+        return projects_services.get_project(project_id)
     except AppError as error:
         raise_http_error(error)
 
 
 @router.post("/", status_code=201, response_model=projects_schemas.ProjectResponse)
-def create_project(project: projects_schemas.ProjectCreate, db=Depends(get_db)):
+def create_project(project: projects_schemas.ProjectCreate):
     try:
-        return projects_services.create_project(project, db)
+        return projects_services.create_project(project)
     except AppError as error:
         raise_http_error(error)
 
 
 @router.patch("/{project_id}", response_model=projects_schemas.ProjectResponse)
 def update_project(
-    project_id: int, project: projects_schemas.ProjectUpdate, db=Depends(get_db)
+    project_id: int, project: projects_schemas.ProjectUpdate
 ):
     try:
-        return projects_services.update_project(project_id, project, db)
+        return projects_services.update_project(project_id, project)
     except AppError as error:
         raise_http_error(error)
 
 
 @router.delete("/{project_id}", status_code=204)
-def delete_project(project_id: int, db=Depends(get_db)):
+def delete_project(project_id: int):
     try:
-        return projects_services.delete_project(project_id, db)
+        return projects_services.delete_project(project_id)
     except AppError as error:
         raise_http_error(error)
 
