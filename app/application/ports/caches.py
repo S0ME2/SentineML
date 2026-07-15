@@ -1,0 +1,9 @@
+from typing import Protocol
+
+from app.domain.projects import Project
+
+
+class ProjectCache(Protocol):
+    def get(self, project_id: int) -> Project | None: ...
+    def put(self, project: Project) -> None: ...
+    def invalidate(self, project_id: int) -> None: ...
