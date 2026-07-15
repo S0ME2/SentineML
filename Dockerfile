@@ -16,7 +16,7 @@ ENV UV_LINK_MODE=copy \
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     --mount=type=bind,source=uv.lock,target=uv.lock \
-    uv sync --locked --no-dev --no-install-project --no-editable
+    uv sync --locked --no-dev --no-install-project
 
 COPY app app
 
@@ -39,8 +39,7 @@ RUN addgroup --system group \
     && adduser --system --ingroup group user
 
 COPY --from=builder --chown=user:group /build/.venv /SentinelML/.venv
-
-COPY --from=builder --chown=user:group /build/app /SentinelML/app
+COPY --chown=user:group app /SentinelML/app
 
 USER user
 

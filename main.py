@@ -1,5 +1,5 @@
-def main():
-    print("Hello from sentinelml!")
+def main() -> None:
+    print("Run the API with: uv run uvicorn app.main:app --reload --port 8888")
 
 
 if __name__ == "__main__":
