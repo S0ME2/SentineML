@@ -70,6 +70,8 @@ MANIFEST
 # ==========================================
 .idea/
 .vscode/
+.codex/
+backups/
 *.suo
 *.ntvs*
 *.njsproj

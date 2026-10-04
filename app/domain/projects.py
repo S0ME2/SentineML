@@ -15,7 +15,9 @@ class Project:
         self.change_description(self.description)
 
     def rename(self, name: object) -> None:
-        self.name = required_text(name, "Project name", InvalidProjectData)
+        self.name = required_text(
+            name, "Project name", InvalidProjectData, max_length=255
+        )
 
     def change_description(self, description: object) -> None:
         self.description = optional_text(

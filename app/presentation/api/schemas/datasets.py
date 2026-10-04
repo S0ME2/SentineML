@@ -2,10 +2,10 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class DatasetCreate(BaseModel):
-    name: str = Field(min_length=1)
-    version: str = Field(min_length=1)
+    name: str = Field(min_length=1, max_length=255)
+    version: str = Field(min_length=1, max_length=255)
     description: str | None = None
-    dataset_hash: str | None = None
+    dataset_hash: str | None = Field(default=None, max_length=255)
     source: str | None = None
     metadata: str | None = None
 
@@ -23,9 +23,9 @@ class DatasetResponse(BaseModel):
 
 
 class DatasetUpdate(BaseModel):
-    name: str | None = Field(default=None, min_length=1)
-    version: str | None = Field(default=None, min_length=1)
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    version: str | None = Field(default=None, min_length=1, max_length=255)
     description: str | None = None
-    dataset_hash: str | None = None
+    dataset_hash: str | None = Field(default=None, max_length=255)
     source: str | None = None
     metadata: str | None = None

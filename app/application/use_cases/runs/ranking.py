@@ -10,6 +10,7 @@ class CompareProjectRuns:
         self._uow_factory = uow_factory
 
     def execute(self, project_id: int, metric_name: str) -> list[RunRankingItem]:
+        metric_name = metric_name.strip()
         with self._uow_factory() as uow:
             if uow.projects.get_by_id(project_id) is None:
                 raise project_exc.ProjectNotFound(

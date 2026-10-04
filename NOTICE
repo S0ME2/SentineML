@@ -1,0 +1,20 @@
+SentinelML
+Project source is licensed under Apache License 2.0 (see LICENSE).
+
+Bundled third-party assets retain their own licenses and notices:
+
+- Manrope font: The Manrope Project Authors, SIL Open Font License 1.1.
+  app/web/fonts/manrope.ttf; license: app/web/fonts/OFL.txt
+- DM Sans font: The DM Sans Project Authors, SIL Open Font License 1.1.
+  app/web/fonts/dm-sans.ttf; license: app/web/fonts/DM-Sans-OFL.txt
+- Sora font: The Sora Project Authors, SIL Open Font License 1.1.
+  app/web/fonts/sora.ttf; license: app/web/fonts/Sora-OFL.txt
+- IBM Plex Mono font: IBM Corp., SIL Open Font License 1.1.
+  app/web/fonts/ibm-plex-mono.ttf; license: app/web/fonts/IBM-Plex-Mono-OFL.txt
+- Lucide icons, including sprite.svg: Lucide Contributors, ISC License;
+  includes Feather portions credited to Cole Bemis under MIT.
+  Files and retained license: app/web/icons/, app/web/icons/LICENSE.txt
+
+See each retained license for exact copyright attribution and terms.
+Python dependencies and container components carry separate upstream licenses;
+this asset index does not relicense them or replace their package notices.

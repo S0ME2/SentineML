@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from math import isfinite
 
 from app.domain.errors import InvalidMetricData
 from app.domain.validation import optional_text, required_text
@@ -18,12 +19,20 @@ class Metric:
         self.change_notes(self.notes)
 
     def rename(self, name: object) -> None:
-        self.name = required_text(name, "Metric name", InvalidMetricData)
+        self.name = required_text(
+            name, "Metric name", InvalidMetricData, max_length=255
+        )
 
     def change_value(self, value: object) -> None:
         if isinstance(value, bool) or not isinstance(value, int | float):
             raise InvalidMetricData("Metric value must be a number")
-        self.value = float(value)
+        try:
+            numeric_value = float(value)
+        except (OverflowError, ValueError) as error:
+            raise InvalidMetricData("Metric value must be finite") from error
+        if not isfinite(numeric_value):
+            raise InvalidMetricData("Metric value must be finite")
+        self.value = numeric_value
 
     def change_notes(self, notes: object) -> None:
         self.notes = optional_text(notes, "Metric notes", InvalidMetricData)

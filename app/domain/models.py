@@ -21,10 +21,12 @@ class Model:
         self.change_metadata(self.metadata)
 
     def rename(self, name: object) -> None:
-        self.name = required_text(name, "Model name", InvalidModelData)
+        self.name = required_text(name, "Model name", InvalidModelData, max_length=255)
 
     def change_version(self, version: object) -> None:
-        self.version = required_text(version, "Model version", InvalidModelData)
+        self.version = required_text(
+            version, "Model version", InvalidModelData, max_length=255
+        )
 
     def change_description(self, description: object) -> None:
         self.description = optional_text(
@@ -38,6 +40,7 @@ class Model:
             model_type,
             "Model type",
             InvalidModelData,
+            max_length=255,
         )
 
     def change_metadata(self, metadata: object) -> None:

@@ -1,0 +1,49 @@
+# Included inside http {}. Replace hostname and TLS paths before use.
+limit_req_zone $binary_remote_addr zone=sentinelml:10m rate=10r/s;
+
+# Browser-origin protection; non-browser API clients may omit Origin.
+map $http_origin $sentinelml_bad_origin {
+    default 1;
+    "" 0;
+    "https://sentinel.example.com" 0;
+}
+map $http_sec_fetch_site $sentinelml_cross_site {
+    default 0;
+    "cross-site" 1;
+}
+log_format sentinelml '$remote_addr $remote_user [$time_local] '
+                      '"$request_method $uri" $status $body_bytes_sent';
+
+server {
+    listen 443 ssl default_server;
+    server_name sentinel.example.com;
+    ssl_certificate /etc/ssl/sentinelml/fullchain.pem;
+    ssl_certificate_key /etc/ssl/sentinelml/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    server_tokens off;
+
+    if ($host != sentinel.example.com) { return 444; }
+    if ($sentinelml_bad_origin) { return 403; }
+    if ($sentinelml_cross_site) { return 403; }
+
+    auth_basic "SentinelML private instance";
+    auth_basic_user_file /etc/nginx/sentinelml.htpasswd;
+    limit_req zone=sentinelml burst=40 nodelay;
+    limit_req_status 429;
+    client_max_body_size 1m;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options DENY always;
+    add_header Referrer-Policy no-referrer always;
+    access_log /var/log/nginx/sentinelml.access.log sentinelml;
+
+    location / {
+        proxy_pass http://127.0.0.1:8888;
+        proxy_set_header Host sentinel.example.com;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header Authorization "";
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 30s;
+    }
+}

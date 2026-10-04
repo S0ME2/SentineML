@@ -1,9 +1,9 @@
-# syntax=docker/dockerfile:1.7
-FROM uv:0.11.28 AS uv-bin
+# syntax=docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
+FROM ghcr.io/astral-sh/uv:0.11.28@sha256:0f36cb9361a3346885ca3677e3767016687b5a170c1a6b88465ec14aefec90aa AS uv-bin
 
 
 
-FROM python:3.12-slim AS builder
+FROM python:3.12-slim@sha256:2f17fc044b579bab302c2e8054d3a686e2cb9a83de48e70534b94cd8ebbe06a9 AS builder
 
 COPY --from=uv-bin /uv /uvx /bin/
 
@@ -19,6 +19,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev --no-install-project
 
 COPY app app
+COPY sentinelml_client.py README.md LICENSE NOTICE ./
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
@@ -27,7 +28,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 
 
-FROM python:3.12-slim AS runner
+FROM python:3.12-slim@sha256:2f17fc044b579bab302c2e8054d3a686e2cb9a83de48e70534b94cd8ebbe06a9 AS runner
 
 WORKDIR /SentinelML
 
@@ -40,6 +41,7 @@ RUN addgroup --system group \
 
 COPY --from=builder --chown=user:group /build/.venv /SentinelML/.venv
 COPY --chown=user:group app /SentinelML/app
+COPY --chown=user:group LICENSE NOTICE /SentinelML/
 
 USER user
 

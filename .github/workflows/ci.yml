@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+        with:
+          version: "0.11.28"
+          python-version: "3.12"
+      - run: uv sync --locked
+      - run: make lint
+      - run: make test
+      - name: Build and inspect source distribution and wheel
+        run: |
+          uv build
+          uv run python tests/check_distribution.py dist
+      - name: Install wheel outside the source checkout
+        run: |
+          uv venv .codex/ci-wheel
+          uv export --locked --no-dev --no-emit-project --no-hashes --format requirements-txt --output-file .codex/wheel-constraints.txt
+          uv pip install --python .codex/ci-wheel/bin/python --constraint .codex/wheel-constraints.txt dist/*.whl
+          .codex/ci-wheel/bin/python -I -c "from pathlib import Path; import app.main, sentinelml_client; from importlib.metadata import version; assert version('sentinelml') == '0.1.0'; assert 'site-packages' in app.main.__file__; assert (Path(app.main.__file__).parent / 'web/index.html').is_file()"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+      - run: node --check app/web/app.js
+      - name: Start isolated integration stack
+        run: docker compose -p sentinelml-ci up -d --build --wait
+      - name: Exercise HTTP workflow
+        run: uv run python -m unittest discover -s tests/integration -v
+        env:
+          SENTINELML_TEST_URL: http://127.0.0.1:8888
+      - name: Install browser test runtime
+        run: uv run --with playwright==1.63.0 python -m playwright install --with-deps chromium
+      - name: Exercise dashboard workflows
+        run: uv run --with playwright==1.63.0 python tests/browser/smoke.py --url http://127.0.0.1:8888
+      - name: Exercise dashboard insights
+        run: uv run --with playwright==1.63.0 python tests/browser/insights.py --url http://127.0.0.1:8888
+      - name: Exercise dashboard catalog
+        run: uv run --with playwright==1.63.0 python tests/browser/catalog.py --url http://127.0.0.1:8888
+      - name: Container logs on failure
+        if: failure()
+        run: docker compose -p sentinelml-ci logs --tail=100
+      - name: Stop integration stack
+        if: always()
+        run: docker compose -p sentinelml-ci down

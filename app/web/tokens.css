@@ -1,0 +1,123 @@
+/* Hallmark · Forest · mineral paper / emerald / system sans + mono */
+@font-face {
+  font-family: "Manrope";
+  src: url("fonts/manrope.ttf") format("truetype");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+:root {
+  color-scheme: light;
+  --color-paper: oklch(97.5% 0.007 155);
+  --color-surface: oklch(99.5% 0.004 155);
+  --color-ink: oklch(24% 0.025 160);
+  --color-muted: oklch(46% 0.026 160);
+  --color-rule: oklch(86% 0.02 155);
+  --color-accent: oklch(43% 0.105 158);
+  --color-accent-hover: oklch(35% 0.085 158);
+  --color-accent-wash: oklch(94% 0.024 155);
+  --color-accent-ink: oklch(98% 0.008 155);
+  --color-nav: oklch(22% 0.035 160);
+  --color-nav-muted: oklch(77% 0.035 155);
+  --color-nav-rule: oklch(38% 0.035 160);
+  --color-nav-hover: oklch(31% 0.05 160);
+  --color-focus: oklch(57% 0.13 155);
+  --color-transparent: transparent;
+  --color-lime: oklch(88% 0.16 135);
+  --color-metric-paper: oklch(94% 0.024 155);
+  --ink: var(--color-ink);
+  --muted: var(--color-muted);
+  --subtle: var(--color-muted);
+  --line: var(--color-rule);
+  --panel: var(--color-surface);
+  --canvas: var(--color-paper);
+  --cobalt: var(--color-accent);
+  --cobalt-dark: var(--color-accent-hover);
+  --cobalt-wash: var(--color-accent-wash);
+  --teal: oklch(45% 0.09 165);
+  --amber: oklch(53% 0.11 75);
+  --red: oklch(45% 0.16 26);
+  --accent-ink: var(--color-accent-ink);
+  --focus: var(--color-focus);
+  --hover: oklch(95% 0.024 155);
+  --control-line: oklch(61% 0.026 155);
+  --error-surface: oklch(96% 0.025 25);
+  --difference: oklch(93% 0.04 75);
+  --backdrop: oklch(20% 0.012 65 / 0.48);
+  --dialog-shadow: 0 24px 88px oklch(18% 0.012 65 / 0.2);
+  --shadow: 0 8px 32px oklch(24% 0.025 160 / 0.08);
+  --radius: 4px;
+  --radius-sm: 3px;
+  --font-display: "Manrope", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Manrope", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --sans: var(--font-body);
+  --mono: var(--font-mono);
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --text-display: clamp(2rem, 3vw, 3rem);
+  --text-metric: clamp(2rem, 3vw, 2.75rem);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-short: 120ms;
+}
+
+/* Instrument panel typography; all assets served locally. */
+@font-face {
+  font-family: "Sora";
+  src: url("fonts/sora.ttf") format("truetype");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "DM Sans";
+  src: url("fonts/dm-sans.ttf") format("truetype");
+  font-weight: 100 1000;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("fonts/ibm-plex-mono.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+:root {
+  --font-display: "Sora", sans-serif;
+  --font-body: "DM Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --color-paper: oklch(97% 0.007 125);
+  --color-surface: oklch(99.5% 0.003 125);
+  --color-ink: oklch(25% 0.021 160);
+  --color-muted: oklch(46% 0.022 160);
+  --color-rule: oklch(89% 0.01 150);
+  --color-nav: oklch(23% 0.035 160);
+  --color-nav-hover: oklch(30% 0.045 160);
+  --color-nav-muted: oklch(79% 0.025 155);
+  --color-accent: oklch(42% 0.105 155);
+  --color-accent-hover: oklch(34% 0.09 155);
+  --color-accent-wash: oklch(94% 0.035 140);
+  --color-lime: oklch(90% 0.17 125);
+  --color-chart-grid: oklch(91% 0.009 150);
+  --color-chart-bar: oklch(51% 0.115 155);
+  --color-chart-hover: oklch(65% 0.16 145);
+  --color-ring: oklch(36% 0.045 160);
+  --color-status-running: oklch(86% 0.15 140);
+  --color-status-completed: oklch(77% 0.1 170);
+  --color-status-waiting: oklch(78% 0.08 80);
+  --color-status-failed: oklch(78% 0.12 30);
+  --color-status-cancelled: oklch(77% 0.01 155);
+  --color-hover-surface: oklch(97% 0.012 150);
+  --radius: 12px;
+  --radius-sm: 6px;
+  --text-display: clamp(1.75rem, 2.8vw, 2.25rem);
+  --text-metric: clamp(1.75rem, 2.5vw, 2.125rem);
+}

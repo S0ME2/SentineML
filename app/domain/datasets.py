@@ -23,10 +23,14 @@ class Dataset:
         self.change_metadata(self.metadata)
 
     def rename(self, name: object) -> None:
-        self.name = required_text(name, "Dataset name", InvalidDatasetData)
+        self.name = required_text(
+            name, "Dataset name", InvalidDatasetData, max_length=255
+        )
 
     def change_version(self, version: object) -> None:
-        self.version = required_text(version, "Dataset version", InvalidDatasetData)
+        self.version = required_text(
+            version, "Dataset version", InvalidDatasetData, max_length=255
+        )
 
     def change_description(self, description: object) -> None:
         self.description = optional_text(
@@ -40,6 +44,7 @@ class Dataset:
             dataset_hash,
             "Dataset hash",
             InvalidDatasetData,
+            max_length=255,
         )
 
     def change_source(self, source: object) -> None:

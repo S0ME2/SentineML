@@ -32,7 +32,7 @@ class Run:
         if not isinstance(self.status, RunStatus):
             try:
                 self.status = RunStatus(self.status)
-            except ValueError as error:
+            except (TypeError, ValueError) as error:
                 raise InvalidRunData(f"Unknown run status: {self.status}") from error
 
         self.change_notes(self.notes)

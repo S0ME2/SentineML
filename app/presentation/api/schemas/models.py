@@ -2,10 +2,10 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class ModelCreate(BaseModel):
-    name: str = Field(min_length=1)
-    version: str = Field(min_length=1)
+    name: str = Field(min_length=1, max_length=255)
+    version: str = Field(min_length=1, max_length=255)
     description: str | None = None
-    model_type: str | None = None
+    model_type: str | None = Field(default=None, max_length=255)
     metadata: str | None = None
 
 
@@ -21,8 +21,8 @@ class ModelResponse(BaseModel):
 
 
 class ModelUpdate(BaseModel):
-    name: str | None = Field(default=None, min_length=1)
-    version: str | None = Field(default=None, min_length=1)
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    version: str | None = Field(default=None, min_length=1, max_length=255)
     description: str | None = None
-    model_type: str | None = None
+    model_type: str | None = Field(default=None, max_length=255)
     metadata: str | None = None
