@@ -1,0 +1,13 @@
+include LICENSE NOTICE README.md CHANGELOG.md CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md
+include Dockerfile docker-compose.yaml Makefile uv.lock .dockerignore .gitignore
+include .env.example .env.docker.example
+recursive-include app *.py *.html *.css *.js *.ttf *.svg *.txt
+recursive-include sql *.sql
+recursive-include docs *.md *.example
+recursive-include assets *.png
+recursive-include examples *.py
+recursive-include tests *.py
+recursive-include .github *.yml *.md
+prune .codex
+prune .venv
+global-exclude __pycache__ *.py[cod]

@@ -20,16 +20,21 @@ class Parameter:
         self.change_notes(self.notes)
 
     def rename(self, name: object) -> None:
-        self.name = required_text(name, "Parameter name", InvalidParameterData)
+        self.name = required_text(
+            name, "Parameter name", InvalidParameterData, max_length=255
+        )
 
     def change_value(self, value: object) -> None:
-        self.value = required_text(value, "Parameter value", InvalidParameterData)
+        self.value = required_text(
+            value, "Parameter value", InvalidParameterData, max_length=255
+        )
 
     def change_value_type(self, value_type: object) -> None:
         self.value_type = optional_text(
             value_type,
             "Parameter value type",
             InvalidParameterData,
+            max_length=100,
         )
 
     def change_notes(self, notes: object) -> None:

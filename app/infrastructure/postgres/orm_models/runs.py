@@ -5,6 +5,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Identity,
+    Index,
     Integer,
     Text,
     false,
@@ -26,6 +27,17 @@ RUN_STATUS_TYPE = PostgreSQLEnum(
 
 class RunORM(Base):
     __tablename__ = "runs"
+    __table_args__ = (
+        Index("ix_runs_project_id", "project_id"),
+        Index("ix_runs_dataset_id", "dataset_id"),
+        Index("ix_runs_model_id", "model_id"),
+        Index(
+            "ix_runs_rankable_project",
+            "project_id",
+            "id",
+            postgresql_where=text("status = 'completed' AND is_ignored IS FALSE"),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Identity(always=True), primary_key=True)
     project_id: Mapped[int] = mapped_column(

@@ -1,6 +1,9 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.bootstrap import get_engine, get_redis_client
 from app.presentation.api.error_handlers import register_exception_handlers
@@ -30,8 +33,29 @@ async def lifespan(app: FastAPI):
         engine.dispose()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title="SentinelML",
+    description="Self-hosted experiment history, lifecycle management, and comparison.",
+    version="0.1.0",
+    lifespan=lifespan,
+)
 register_exception_handlers(app)
+
+web_directory = Path(__file__).resolve().parent / "web"
+app.mount(
+    "/ui/static", StaticFiles(directory=web_directory, check_dir=False), name="web"
+)
+
+
+@app.get("/ui", include_in_schema=False)
+def dashboard_redirect() -> RedirectResponse:
+    return RedirectResponse("/ui/")
+
+
+@app.get("/ui/", include_in_schema=False)
+def dashboard() -> FileResponse:
+    return FileResponse(web_directory / "index.html")
+
 
 app.include_router(health.router)
 app.include_router(projects.router)

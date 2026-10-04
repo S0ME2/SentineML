@@ -14,6 +14,7 @@ class MetricDirection:
             self.name,
             "Metric direction name",
             InvalidMetricDirectionData,
+            max_length=255,
         )
         self.change_maximize(self.maximize)
 

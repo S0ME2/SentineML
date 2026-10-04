@@ -1,11 +1,21 @@
 services:
   app:
     build: .
-    image: sentinelml
+    image: ${SENTINELML_IMAGE:-sentinelml:local}
     env_file:
-      - .env.local.docker
+      - path: .env.docker.example
+      - path: .env.local.docker
+        required: false
+    environment:
+      APP_ENV: docker
     ports:
-      - "8888:8888"
+      - "127.0.0.1:${APP_PORT:-8888}:8888"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json, urllib.request; assert json.load(urllib.request.urlopen('http://127.0.0.1:8888/health/db', timeout=3))['status'] == 'ok'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     depends_on:
       db:
         condition: service_healthy
@@ -13,9 +23,11 @@ services:
         condition: service_healthy
 
   db:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
     env_file:
-      - .env.local.docker
+      - path: .env.docker.example
+      - path: .env.local.docker
+        required: false
     healthcheck:
       test:
         [
@@ -30,7 +42,7 @@ services:
       - ./sql/database.sql:/docker-entrypoint-initdb.d/01-database.sql:ro
 
   redis:
-    image: redis:8.0
+    image: redis:8.0@sha256:ae471bdc20de180beed36e347d170ec0bdf8faa327959ea1f24692f22b05b955
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s

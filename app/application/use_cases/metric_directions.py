@@ -8,6 +8,15 @@ from app.domain.errors import (
 from app.domain.metric_directions import MetricDirection
 
 
+def _normalize_metric_name(metric_name: object) -> str:
+    if not isinstance(metric_name, str):
+        raise exc.InvalidMetricDirectionData("Metric direction name must be a string")
+    normalized_name = metric_name.strip()
+    if not normalized_name:
+        raise exc.InvalidMetricDirectionData("Metric direction name cannot be empty")
+    return normalized_name
+
+
 @dataclass(frozen=True, slots=True, kw_only=True)
 class CreateMetricDirectionCommand:
     name: str
@@ -34,6 +43,7 @@ class GetMetricDirection:
         self._uow_factory = uow_factory
 
     def execute(self, metric_name: str) -> MetricDirection:
+        metric_name = _normalize_metric_name(metric_name)
         with self._uow_factory() as uow:
             direction = uow.metric_directions.get_by_name(metric_name)
             if direction is None:
@@ -67,18 +77,17 @@ class UpdateMetricDirection:
         self._uow_factory = uow_factory
 
     def execute(self, command: UpdateMetricDirectionCommand) -> MetricDirection:
+        metric_name = _normalize_metric_name(command.metric_name)
         with self._uow_factory() as uow:
-            direction = uow.metric_directions.get_by_name_for_update(
-                command.metric_name
-            )
+            direction = uow.metric_directions.get_by_name_for_update(metric_name)
             if direction is None:
                 raise exc.MetricDirectionNotFound(
-                    f"Metric direction '{command.metric_name}' not found"
+                    f"Metric direction '{metric_name}' not found"
                 )
 
-            if uow.metrics.exists_by_name(command.metric_name):
+            if uow.metrics.exists_by_name(metric_name):
                 raise exc.MetricDirectionInUse(
-                    f"Metric direction '{command.metric_name}' is already used by "
+                    f"Metric direction '{metric_name}' is already used by "
                     "metrics and cannot be updated"
                 )
 
@@ -97,6 +106,7 @@ class DeleteMetricDirection:
         self._uow_factory = uow_factory
 
     def execute(self, metric_name: str) -> None:
+        metric_name = _normalize_metric_name(metric_name)
         with self._uow_factory() as uow:
             direction = uow.metric_directions.get_by_name_for_update(metric_name)
             if direction is None:

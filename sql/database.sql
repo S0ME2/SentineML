@@ -1,14 +1,5 @@
--- Optional reset for development.
--- WARNING: This deletes existing tables/data.
-DROP TABLE IF EXISTS metrics CASCADE;
-DROP TABLE IF EXISTS parameters CASCADE;
-DROP TABLE IF EXISTS runs CASCADE;
-DROP TABLE IF EXISTS metric_directions CASCADE;
-DROP TABLE IF EXISTS models CASCADE;
-DROP TABLE IF EXISTS datasets CASCADE;
-DROP TABLE IF EXISTS projects CASCADE;
-DROP TYPE IF EXISTS run_status;
-
+-- Fresh-install-only schema. Refuse existing objects; never reset user data.
+BEGIN;
 
 CREATE TYPE run_status AS ENUM (
     'waiting',
@@ -136,3 +127,13 @@ CREATE TABLE metrics (
 
     CONSTRAINT uq_metrics_run_name UNIQUE (run_id, name)
 );
+
+-- Existing unique (run_id, name) indexes cover parameter/metric run lookups.
+CREATE INDEX ix_runs_project_id ON runs (project_id);
+CREATE INDEX ix_runs_dataset_id ON runs (dataset_id);
+CREATE INDEX ix_runs_model_id ON runs (model_id);
+CREATE INDEX ix_runs_rankable_project ON runs (project_id, id)
+    WHERE status = 'completed' AND is_ignored IS FALSE;
+CREATE INDEX ix_metrics_name_value_run ON metrics (name, value, run_id);
+
+COMMIT;

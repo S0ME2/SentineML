@@ -1,0 +1,23 @@
+name: Feature request
+description: Describe an experiment-tracking workflow you want to improve.
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: workflow
+    attributes:
+      label: What are you trying to do?
+      description: Describe the experiment workflow and where the current behavior falls short.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: A concrete example of inputs, actions, and expected results helps.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or workarounds
+      description: What have you tried, and why is it insufficient?

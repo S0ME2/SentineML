@@ -2,6 +2,7 @@ from sqlalchemy import (
     Double,
     ForeignKey,
     Identity,
+    Index,
     Integer,
     String,
     Text,
@@ -14,7 +15,10 @@ from app.infrastructure.postgres.base import Base
 
 class MetricORM(Base):
     __tablename__ = "metrics"
-    __table_args__ = (UniqueConstraint("run_id", "name", name="uq_metrics_run_name"),)
+    __table_args__ = (
+        UniqueConstraint("run_id", "name", name="uq_metrics_run_name"),
+        Index("ix_metrics_name_value_run", "name", "value", "run_id"),
+    )
 
     id: Mapped[int] = mapped_column(Identity(always=True), primary_key=True)
     run_id: Mapped[int] = mapped_column(
